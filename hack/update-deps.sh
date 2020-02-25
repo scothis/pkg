@@ -15,7 +15,7 @@
 # limitations under the License.
 
 readonly ROOT_DIR=$(dirname $0)/..
-source ${ROOT_DIR}/vendor/knative.dev/test-infra/scripts/library.sh
+source $(go mod download -json 2>/dev/null | jq -r 'select(.Path == "knative.dev/test-infra").Dir')/scripts/library.sh
 
 set -o errexit
 set -o nounset
@@ -24,7 +24,6 @@ set -o pipefail
 cd ${ROOT_DIR}
 
 # Ensure we have everything we need under vendor/
-dep ensure $@
+go mod vendor
 
 rm -rf $(find vendor/ -name 'OWNERS')
-rm -rf $(find vendor/ -name '*_test.go')

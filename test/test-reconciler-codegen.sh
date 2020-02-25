@@ -18,10 +18,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/library.sh
+source $(go mod download -json 2>/dev/null | jq -r 'select(.Path == "knative.dev/test-infra").Dir')/scripts/library.sh
 
-CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${REPO_ROOT_DIR}; ls -d -1 $(dirname $0)/../vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
-KNATIVE_CODEGEN_PKG=${KNATIVE_CODEGEN_PKG:-$(cd ${REPO_ROOT_DIR}; ls -d -1 $(dirname $0)/../vendor/knative.dev/pkg 2>/dev/null || echo ../pkg)}
+CODEGEN_PKG=$(( go mod download -json || true ) 2>/dev/null | jq -r 'select(.Path == "k8s.io/code-generator").Dir')
+KNATIVE_CODEGEN_PKG=$(( go mod download -json || true ) 2>/dev/null | jq -r 'select(.Path == "knative.dev/pkg").Dir')
 
 GENCLIENT_PKG=knative.dev/pkg/test/genclient
 
@@ -30,24 +30,24 @@ rm -rf $(dirname $0)/genclient
 
 header "Test Generated Reconciler Builds."
 
-${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
+bash ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   ${GENCLIENT_PKG} knative.dev/pkg/apis/test \
   "example:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
 # Knative Injection
-${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
+bash ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
   ${GENCLIENT_PKG} knative.dev/pkg/apis/test \
   "example:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
-${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
+bash ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   ${GENCLIENT_PKG}/pub knative.dev/pkg/apis/test \
   "pub:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
 # Knative Injection
-${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
+bash ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
   ${GENCLIENT_PKG}/pub knative.dev/pkg/apis/test \
   "pub:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt

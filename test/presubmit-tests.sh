@@ -22,7 +22,7 @@
 # in a net-negative contributor experience.
 export DISABLE_MD_LINTING=1
 
-source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/presubmit-tests.sh
+source $(go mod download -json 2>/dev/null | jq -r 'select(.Path == "knative.dev/test-infra").Dir')/scripts/presubmit-tests.sh
 
 # TODO(#17): Write integration tests.
 
